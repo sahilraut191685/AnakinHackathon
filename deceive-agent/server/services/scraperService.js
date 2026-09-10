@@ -121,5 +121,14 @@ async function scrapeWebsite(url) {
     return `Error: Failed to scrape ${url} — ${error.message}`;
   }
 }
+// testting the  cheerio scrapper
+async function main(){
+  const result= await scrapeWebsite("https://airbnb.com");
+  console.log(result);
+
+}
+
+main();
+
 
 module.exports = { scrapeWebsite };
