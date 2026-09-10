@@ -124,18 +124,18 @@ async function scrapeWebsite(url) {
 
 
 // testting the  cheerio scrapper
-async function main(){
-  try{
-      const result= await scrapeWebsite("https://airbnb.com");
-  console.log(result);
+// async function main(){
+//   try{
+//       const result= await scrapeWebsite("https://airbnb.com");
+//   console.log(result);
 
-  }
-  catch(error){
-    console.log(`There may be Error in link: ${error.message}`);
-  }
-}
+//   }
+//   catch(error){
+//     console.log(`There may be Error in link: ${error.message}`);
+//   }
+// }
 
-main();
+// main();
 
 
 module.exports = { scrapeWebsite };

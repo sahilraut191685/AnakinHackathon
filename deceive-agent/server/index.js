@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const { searchWeb } = require("./services/searchService");
 const { askAgent } = require("./services/llmService");
-
+const { scrapeWebsite } = require("./services/scraperService");
 
 
 const app = express();
@@ -60,6 +60,25 @@ app.post("/api/test-agent", async (req, res) => {
     console.error("Agent test failed:", error.message);
     res.status(500).json({ error: "Agent request failed" });
   }
+});
+
+
+// scrapper response
+app.post("/api/test-scrapper",async(req,res)=>{
+  try{
+  const {url}= req.body;
+  if(!url){
+    return res.status(400).json({error:"url is required"});
+  }
+  console.log("Scrapper Recived Url:",url);
+  const ans= await scrapeWebsite(url);
+  res.json({ans});
+  }
+  catch(error){
+    console.log("Failed to Scrap",error.message);
+    res.status(500).json({error:"Failed Request"});
+  }
+  
 });
 
 
