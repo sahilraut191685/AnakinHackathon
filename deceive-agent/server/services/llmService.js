@@ -32,10 +32,6 @@ async function askAgent(message) {
       },
     ];
 
-    
-
-    
-   
     const interaction = await client.interactions.create({
       model: "gemini-3.6-flash",
       store: false,
