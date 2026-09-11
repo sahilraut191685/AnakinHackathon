@@ -7,6 +7,8 @@ dotenv.config();
 const { searchWeb } = require("./services/searchService");
 const { askAgent } = require("./services/llmService");
 const { scrapeWebsite } = require("./services/scraperService");
+const { extractClaims } = require("./services/claimExtractor");
+
 
 
 const app = express();
@@ -81,6 +83,31 @@ app.post("/api/test-scrapper",async(req,res)=>{
   }
   
 });
+
+// claimextractor function
+app.post("/api/claimextracter", async(req,res)=>{
+  
+  try{
+    const {url,companyname}= req.body;
+
+    if(!url||companyname){
+       return res.status(400).json({ error: "url and companyName are required" });
+    }
+    const websiteText= await scrapeWebsite(url);
+    const claims=await extractClaims(websiteText,companyname);
+
+    res.json(claims);
+
+  }catch(error){
+    console.error("extract-claims error:", err.message);
+    res.status(500).json({ error: err.message });
+
+  }
+
+});
+
+
+
 
 
 // Start server
