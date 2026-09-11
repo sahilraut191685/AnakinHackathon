@@ -91,7 +91,8 @@ async function scrapeWebsite(url) {
     if (!text || text.trim().length === 0) {
       return `Error: No visible text content found on ${url}. The page may be dynamically rendered (requires JavaScript).`;
     }
-
+    console.log("Scraped text length:", text.length);
+    console.log("First 500 chars:", text.slice(0, 500));
     return text;
   } catch (error) {
     // Handle specific error types
