@@ -7,7 +7,7 @@ const path = require("path");
 dotenv.config();
 
 const { searchWeb } = require("./services/searchService");
-const { askAgent } = require("./llmService");
+const { askAgent } = require("./services/llmService");
 const { scrapeWebsite } = require("./services/scraperService");
 const { extractClaims } = require("./services/claimExtractor");
 const { verifyIdentity } = require("./services/identityVerifier");
