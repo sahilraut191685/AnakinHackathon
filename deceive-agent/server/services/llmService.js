@@ -32,7 +32,7 @@ async function askAgent(message) {
     ];
 
     const interaction = await client.interactions.create({
-      model: "gemini-3.6-flash",
+      model: process.env.GEMINI_MODEL,
       store: false,
       input: history,
       tools: [searchWebTool],
@@ -61,7 +61,7 @@ async function askAgent(message) {
 
      
       const finalInteraction = await client.interactions.create({
-        model: "gemini-3.6-flash",
+        model: process.env.GEMINI_MODEL,
         store: false,
         input: history,
         tools: [searchWebTool],
