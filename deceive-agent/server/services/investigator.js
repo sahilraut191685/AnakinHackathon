@@ -2,6 +2,10 @@ const { searchWeb } = require("./searchService");
 const { askAgent } = require("./llmService");
 const { challengeVerdict } = require("./adversarialReviewer");
 
+function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function generateQueries(claim, companyName) {
     const prompt = `
 You are an investigative researcher. You need to independently verify the following claim made by the company "${companyName}".
@@ -41,7 +45,6 @@ async function gatherEvidence(queries) {
             }
         } catch (error) {
             console.error(`gatherEvidence failed for query "${query}":`, error.message);
-            // Continue with other queries if one fails
         }
     }
     
@@ -88,12 +91,18 @@ async function investigateFullClaim(claim, companyName) {
     
     const { queries } = await generateQueries(claim, companyName);
     console.log(`Generated queries:`, queries);
+
+    console.log("Waiting 5s to respect Gemini rate limit...");
+    await delay(5000);
     
     let evidence = await gatherEvidence(queries);
     console.log(`Gathered ${evidence.length} sources of evidence.`);
     
     let verdictData = await generateVerdict(claim, evidence);
     console.log(`Investigator concluded: ${verdictData.verdict} (${verdictData.confidence}%)`);
+
+    console.log("Waiting 5s to respect Gemini rate limit...");
+    await delay(5000);
     
     // Adversarial Review
     console.log("Reviewing verdict...");
@@ -107,7 +116,6 @@ async function investigateFullClaim(claim, companyName) {
         
         const extraEvidence = await gatherEvidence([review.suggestedFollowUpQuery]);
         
-        // Merge and deduplicate evidence
         const seenUrls = new Set(evidence.map(e => e.url));
         for (const res of extraEvidence) {
             if (!seenUrls.has(res.url)) {
@@ -117,11 +125,18 @@ async function investigateFullClaim(claim, companyName) {
         }
         
         console.log(`Gathered ${extraEvidence.length} new sources. Re-evaluating...`);
+
+        console.log("Waiting 5s to respect Gemini rate limit...");
+        await delay(5000);
+
         verdictData = await generateVerdict(claim, evidence);
         console.log(`Final verdict: ${verdictData.verdict} (${verdictData.confidence}%)`);
     } else {
         console.log("Reviewer agreed with the verdict.");
     }
+
+    console.log("Waiting 5s to respect Gemini rate limit before next claim...");
+    await delay(5000);
     
     return {
         claim,
