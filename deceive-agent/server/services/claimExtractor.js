@@ -19,7 +19,7 @@ async function extractClaims(websiteText,companyName) {
     { "id": "2", "text": "500+ employees", "category": "workforce" }
   ]
 }
-
+   
 Website content:
 """
 ${websiteText}

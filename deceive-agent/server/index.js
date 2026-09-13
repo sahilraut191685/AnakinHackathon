@@ -1,15 +1,19 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
 
 dotenv.config();
 
 const { searchWeb } = require("./services/searchService");
-const { askAgent } = require("./services/llmService");
+const { askAgent } = require("./llmService");
 const { scrapeWebsite } = require("./services/scraperService");
 const { extractClaims } = require("./services/claimExtractor");
-
-
+const { verifyIdentity } = require("./services/identityVerifier");
+const { investigateFullClaim } = require("./services/investigator");
+const { calculateRiskScore } = require("./services/riskEngine");
+const { generateActions } = require("./services/actionEngine");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,27 +27,18 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-//testing 
+// Testing search
 app.post("/api/test-search", async (req, res) => {
   try {
     const { query } = req.body;
-
-    console.log("BODY:", req.body);
-    console.log("QUERY:", query);
     if (!query) {
-      return res.status(400).json({
-        error: "Query is required"
-      });
+      return res.status(400).json({ error: "Query is required" });
     }
     const result = await searchWeb(query);
     res.json(result);
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Test search failed:", error.message);
-
-    res.status(500).json({
-      error: "Search failed"
-    });
+    res.status(500).json({ error: "Search failed" });
   }
 });
 
@@ -51,12 +46,9 @@ app.post("/api/test-search", async (req, res) => {
 app.post("/api/test-agent", async (req, res) => {
   try {
     const { message } = req.body;
-
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
-
-    console.log("Agent received message:", message);
     const response = await askAgent(message);
     res.json({ response });
   } catch (error) {
@@ -65,50 +57,128 @@ app.post("/api/test-agent", async (req, res) => {
   }
 });
 
-
-// scrapper response
-app.post("/api/test-scrapper",async(req,res)=>{
+// Scraper response
+app.post("/api/test-scrapper", async(req,res)=>{
   try{
-  const {url}= req.body;
-  if(!url){
-    return res.status(400).json({error:"url is required"});
-  }
-  console.log("Scrapper Recived Url:",url);
-  const ans= await scrapeWebsite(url);
-  res.json({ans});
-  }
-  catch(error){
+    const {url}= req.body;
+    if(!url){
+      return res.status(400).json({error:"url is required"});
+    }
+    const ans= await scrapeWebsite(url);
+    res.json({ans});
+  } catch(error){
     console.log("Failed to Scrap",error.message);
     res.status(500).json({error:"Failed Request"});
   }
-  
 });
 
-// claimextractor function
-app.post("/api/claimextracter", async(req,res)=>{
-  
+// Extract claims with identity verification
+app.post("/api/extract-claims", async(req,res)=>{
   try{
-    const {url,companyname}= req.body;
+    const { url, companyname } = req.body;
 
-    if(!url||companyname){
-       return res.status(400).json({ error: "url and companyName are required" });
+    if(!url || !companyname){
+       return res.status(400).json({ error: "url and companyname are required" });
     }
-    const websiteText= await scrapeWebsite(url);
-    const claims=await extractClaims(websiteText,companyname);
+    
+    // 1. Verify Identity
+    const identityCheck = await verifyIdentity(companyname, url);
+    if (!identityCheck.confirmed) {
+        return res.status(400).json({ 
+            error: "Identity verification failed. The URL does not appear to be the official website.",
+            notes: identityCheck.notes 
+        });
+    }
 
-    res.json(claims);
+    // 2. Scrape and Extract
+    const websiteText = await scrapeWebsite(url);
+    if (websiteText.startsWith("Error:")) {
+        return res.status(400).json({ error: websiteText });
+    }
+    const claims = await extractClaims(websiteText, companyname);
 
-  }catch(error){
-    console.error("extract-claims error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.json({
+        identityCheck,
+        claims
+    });
 
+  } catch(error){
+    console.error("extract-claims error:", error.message);
+    res.status(500).json({ error: error.message });
   }
-
 });
 
+// Main investigate pipeline
+app.post("/api/investigate", async (req, res) => {
+  try {
+    const { companyName, url } = req.body; // Using camelCase for this new route
+    
+    if (!url || !companyName) {
+      return res.status(400).json({ error: "url and companyName are required" });
+    }
 
+    // DEMO MODE CHECK
+    if (process.env.DEMO_MODE === "true") {
+      console.log("DEMO MODE ACTIVE: Returning cached data after delay...");
+      const cachePath = path.join(__dirname, "data", "cachedDemo.json");
+      if (fs.existsSync(cachePath)) {
+          const cachedData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+          // Artificial 2.5 second delay
+          await new Promise(resolve => setTimeout(resolve, 2500));
+          return res.json(cachedData);
+      } else {
+          console.warn("Demo mode is on but cachedDemo.json not found. Proceeding with live investigation.");
+      }
+    }
 
+    // 1. Verify Identity
+    const identityCheck = await verifyIdentity(companyName, url);
+    if (!identityCheck.confirmed) {
+      return res.status(400).json({ 
+        error: "Identity verification failed. The URL does not appear to be the official website.",
+        notes: identityCheck.notes 
+      });
+    }
 
+    // 2. Scrape and Extract
+    const websiteText = await scrapeWebsite(url);
+    if (websiteText.startsWith("Error:")) {
+      return res.status(400).json({ error: websiteText });
+    }
+    const { claims } = await extractClaims(websiteText, companyName);
+    
+    if (!claims || claims.length === 0) {
+        return res.json({ identityCheck, claims: [], results: [], riskScore: { overallScore: 0, riskLevel: "LOW", breakdown: [] } });
+    }
+
+    // 3. Investigate Each Claim (Sequential)
+    const results = [];
+    for (const claim of claims) {
+        const result = await investigateFullClaim(claim, companyName);
+        results.push(result);
+    }
+
+    // 4. Calculate Risk Score
+    const riskScore = calculateRiskScore(results);
+
+    // 5. Generate Recommended Actions
+    const { actions, draftEmail } = await generateActions(companyName, results, riskScore);
+
+    // 6. Return full payload
+    res.json({
+        identityCheck,
+        claims,
+        results,
+        riskScore,
+        actions,
+        draftEmail
+    });
+
+  } catch (error) {
+    console.error("Investigate pipeline error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Start server
 app.listen(PORT, () => {

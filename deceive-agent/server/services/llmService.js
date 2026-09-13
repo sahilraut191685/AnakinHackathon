@@ -1,6 +1,5 @@
 const { GoogleGenAI } = require("@google/genai");
 const { searchWeb } = require("./searchService");
-const { text } = require("express");
 
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 

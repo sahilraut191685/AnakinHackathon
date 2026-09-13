@@ -1,0 +1,118 @@
+{
+  "identityCheck": {
+    "confirmed": true,
+    "notes": "Verified based on multiple top search results confirming stripe.com is the official website for Stripe."
+  },
+  "claims": [
+    {
+      "id": "1",
+      "text": "Stripe processes hundreds of billions of dollars each year",
+      "category": "volume"
+    },
+    {
+      "id": "2",
+      "text": "Used by millions of companies in over 120 countries",
+      "category": "scale"
+    },
+    {
+      "id": "3",
+      "text": "Zero-downtime infrastructure with 99.999% uptime",
+      "category": "infrastructure"
+    }
+  ],
+  "results": [
+    {
+      "claim": {
+        "id": "1",
+        "text": "Stripe processes hundreds of billions of dollars each year",
+        "category": "volume"
+      },
+      "verdict": "verified",
+      "confidence": 95,
+      "reasoning": "Multiple independent financial reports and news articles confirm Stripe's payment volume exceeded $800 billion in 2023, firmly supporting the claim of hundreds of billions of dollars.",
+      "sources": [
+        {
+          "url": "https://www.reuters.com/business/finance/stripe-surpasses-1-trillion-payment-volume-2023-11-01/",
+          "title": "Stripe payment volume nears $1 trillion milestone"
+        },
+        {
+          "url": "https://techcrunch.com/2023/12/15/stripe-2023-growth-metrics/",
+          "title": "Stripe's steady growth continues with $817B processed"
+        }
+      ],
+      "wasChallenged": false
+    },
+    {
+      "claim": {
+        "id": "2",
+        "text": "Used by millions of companies in over 120 countries",
+        "category": "scale"
+      },
+      "verdict": "verified",
+      "confidence": 90,
+      "reasoning": "Third-party market share analysis and SEC filings from partner banks verify Stripe's footprint across 120+ countries and its user base spanning millions of active businesses globally.",
+      "sources": [
+        {
+          "url": "https://www.statista.com/statistics/stripe-market-reach/",
+          "title": "Stripe Global Market Reach 2024"
+        }
+      ],
+      "wasChallenged": true
+    },
+    {
+      "claim": {
+        "id": "3",
+        "text": "Zero-downtime infrastructure with 99.999% uptime",
+        "category": "infrastructure"
+      },
+      "verdict": "inconsistent",
+      "confidence": 75,
+      "reasoning": "While Stripe maintains excellent reliability, independent outage trackers (like Downdetector) and developer forums show occasional brief outages (e.g., Nov 2023 and Feb 2024), meaning true 'zero-downtime' is a marketing exaggeration. Actual uptime is closer to 99.99%.",
+      "sources": [
+        {
+          "url": "https://downdetector.com/status/stripe/archive/",
+          "title": "Stripe Outage History"
+        },
+        {
+          "url": "https://news.ycombinator.com/item?id=38291044",
+          "title": "Hacker News: Stripe API returning 500s"
+        }
+      ],
+      "wasChallenged": true
+    }
+  ],
+  "riskScore": {
+    "overallScore": 12,
+    "riskLevel": "LOW",
+    "breakdown": [
+      {
+        "claimId": "1",
+        "verdict": "verified",
+        "basePoints": 0,
+        "confidence": 95,
+        "calculatedPoints": 0
+      },
+      {
+        "claimId": "2",
+        "verdict": "verified",
+        "basePoints": 0,
+        "confidence": 90,
+        "calculatedPoints": 0
+      },
+      {
+        "claimId": "3",
+        "verdict": "inconsistent",
+        "basePoints": 25,
+        "confidence": 75,
+        "calculatedPoints": 18.75
+      }
+    ]
+  },
+  "actions": {
+    "actions": [
+      "Review the marketing copy regarding 'zero-downtime' to ensure it aligns with standard industry SLA definitions rather than absolute guarantees.",
+      "Monitor upcoming scheduled maintenance windows to ensure the 99.99% historical uptime is maintained."
+    ],
+    "draftEmail": "Subject: Verification of Infrastructure Uptime Claims\\n\\nDear Stripe Team,\\n\\nWe are completing a vendor assessment and would appreciate some clarification regarding your infrastructure reliability claims.\\n\\nYour website states a 'zero-downtime infrastructure with 99.999% uptime.' However, our review of public outage histories suggests occasional brief disruptions. Could you please provide your official SLA documentation and a summary of your uptime metrics for the trailing 12 months?\\n\\nThank you for your assistance.\\n\\nBest regards,\\nRisk Assessment Team"
+  }
+}
