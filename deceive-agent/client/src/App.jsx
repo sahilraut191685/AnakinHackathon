@@ -44,8 +44,9 @@ function App() {
   };
 
   const copyToClipboard = () => {
-    if (result?.draftEmail) {
-      navigator.clipboard.writeText(result.draftEmail);
+    const email = result?.actions?.draftEmail || result?.draftEmail;
+    if (email) {
+      navigator.clipboard.writeText(email);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -70,10 +71,16 @@ function App() {
     }
   };
 
+  // Defensive: support both flat and nested actions shapes
+  const actionsList = Array.isArray(result?.actions)
+    ? result.actions
+    : (result?.actions?.actions || []);
+  const draftEmailText = result?.draftEmail || result?.actions?.draftEmail || "";
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 font-sans">
       <div className="max-w-5xl mx-auto space-y-8">
-        
+
         {/* Header & Form */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
           <div className="text-center mb-8">
@@ -133,18 +140,18 @@ function App() {
         {/* Results */}
         {result && !loading && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            
+
             {/* Top Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              <div className={`col-span-1 md:col-span-2 rounded-2xl p-6 border flex items-center justify-between ${getRiskColor(result.riskScore.riskLevel)}`}>
+
+              <div className={`col-span-1 md:col-span-2 rounded-2xl p-6 border flex items-center justify-between ${getRiskColor(result?.riskScore?.riskLevel)}`}>
                 <div>
                   <h2 className="text-lg font-medium opacity-80 uppercase tracking-wider">Overall Risk Score</h2>
-                  <div className="text-5xl font-black mt-2">{result.riskScore.overallScore}<span className="text-2xl opacity-50 font-medium">/100</span></div>
+                  <div className="text-5xl font-black mt-2">{result?.riskScore?.overallScore ?? "N/A"}<span className="text-2xl opacity-50 font-medium">/100</span></div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold tracking-tight">{result.riskScore.riskLevel} RISK</div>
-                  <div className="text-sm opacity-75 mt-1">Based on {result.claims.length} claims</div>
+                  <div className="text-2xl font-bold tracking-tight">{result?.riskScore?.riskLevel ?? "UNKNOWN"} RISK</div>
+                  <div className="text-sm opacity-75 mt-1">Based on {result?.claims?.length ?? 0} claims</div>
                 </div>
               </div>
 
@@ -156,34 +163,33 @@ function App() {
                   </svg>
                   <span className="font-semibold">Confirmed Official</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-2 line-clamp-2" title={result.identityCheck.notes}>
-                  {result.identityCheck.notes}
+                <p className="text-xs text-slate-500 mt-2 line-clamp-2" title={result?.identityCheck?.notes}>
+                  {result?.identityCheck?.notes ?? ""}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
+
               {/* Left Column: Claims */}
               <div className="lg:col-span-2 space-y-4">
                 <h3 className="text-xl font-semibold border-b border-slate-800 pb-2 mb-4">Investigated Claims</h3>
-                
-                {result.results.length === 0 ? (
+
+                {(result?.results?.length ?? 0) === 0 ? (
                   <p className="text-slate-400 italic">No verifiable claims found on this page.</p>
                 ) : (
                   result.results.map((res, idx) => (
                     <div key={idx} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden transition-all">
-                      {/* Card Header (Clickable) */}
-                      <div 
+                      <div
                         className="p-4 cursor-pointer hover:bg-slate-800/50 flex items-center justify-between gap-4"
                         onClick={() => toggleClaim(idx)}
                       >
                         <div className="flex-1">
-                          <p className="font-medium text-slate-200">"{res.claim.text}"</p>
+                          <p className="font-medium text-slate-200">"{res?.claim?.text}"</p>
                           <div className="flex items-center gap-3 mt-2">
-                            {getVerdictBadge(res.verdict)}
-                            <span className="text-xs text-slate-500">Conf: {res.confidence}%</span>
-                            {res.wasChallenged && (
+                            {getVerdictBadge(res?.verdict)}
+                            <span className="text-xs text-slate-500">Conf: {res?.confidence}%</span>
+                            {res?.wasChallenged && (
                               <span className="text-xs text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded-md border border-purple-400/20 flex items-center gap-1">
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -199,16 +205,15 @@ function App() {
                           </svg>
                         </div>
                       </div>
-                      
-                      {/* Expanded Content */}
+
                       {expandedClaims[idx] && (
                         <div className="p-4 border-t border-slate-800 bg-slate-950/50 space-y-4 text-sm">
                           <div>
                             <h4 className="text-slate-400 font-medium mb-1">Reasoning</h4>
-                            <p className="text-slate-300 leading-relaxed">{res.reasoning}</p>
+                            <p className="text-slate-300 leading-relaxed">{res?.reasoning}</p>
                           </div>
-                          
-                          {res.sources && res.sources.length > 0 && (
+
+                          {res?.sources && res.sources.length > 0 && (
                             <div>
                               <h4 className="text-slate-400 font-medium mb-2">Sources</h4>
                               <ul className="space-y-2">
@@ -234,8 +239,7 @@ function App() {
 
               {/* Right Column: Actions & Email */}
               <div className="space-y-6">
-                
-                {/* Recommended Actions */}
+
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
                   <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
                     <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -244,7 +248,7 @@ function App() {
                     Recommended Actions
                   </h3>
                   <ul className="space-y-3">
-                    {result.actions.actions.map((action, idx) => (
+                    {actionsList.map((action, idx) => (
                       <li key={idx} className="flex gap-3 text-sm text-slate-300">
                         <span className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-800 text-slate-400 text-xs shrink-0 font-medium">
                           {idx + 1}
@@ -255,7 +259,6 @@ function App() {
                   </ul>
                 </div>
 
-                {/* Draft Email */}
                 <div className="bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden">
                   <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/20">
                     <h3 className="font-semibold text-slate-200 flex items-center gap-2">
@@ -264,7 +267,7 @@ function App() {
                       </svg>
                       Draft Email
                     </h3>
-                    <button 
+                    <button
                       onClick={copyToClipboard}
                       className="text-xs font-medium px-3 py-1.5 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors flex items-center gap-1.5"
                     >
@@ -283,7 +286,7 @@ function App() {
                   </div>
                   <div className="p-4 bg-slate-950">
                     <pre className="whitespace-pre-wrap text-sm text-slate-300 font-sans">
-                      {result.actions.draftEmail}
+                      {draftEmailText}
                     </pre>
                   </div>
                 </div>
