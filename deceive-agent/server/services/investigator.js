@@ -6,6 +6,14 @@ function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function trimEvidence(evidence) {
+    return evidence.slice(0, 6).map(e => ({
+        title: e.title,
+        url: e.url,
+        content: (e.content || e.snippet || "").slice(0, 250)
+    }));
+}
+
 async function generateQueries(claim, companyName) {
     const prompt = `
 You are an investigative researcher. You need to independently verify the following claim made by the company "${companyName}".
@@ -52,13 +60,15 @@ async function gatherEvidence(queries) {
 }
 
 async function generateVerdict(claim, evidence) {
+    const trimmedEvidence = trimEvidence(evidence);
+
     const prompt = `
 You are an objective fact-checker. Evaluate the following claim based ONLY on the provided evidence.
 
 Claim: "${claim.text}"
 
 Evidence:
-${JSON.stringify(evidence, null, 2)}
+${JSON.stringify(trimmedEvidence, null, 2)}
 
 Classify the claim into ONE of these categories:
 - "verified": The evidence strongly supports the claim.
@@ -76,7 +86,7 @@ Return ONLY valid JSON in this exact shape, with no extra text, no markdown form
 * Note: "sources" should only include the specific evidence URLs that led to this verdict. "confidence" must be an integer from 0 to 100.
 `;
     
-    const rawResponse = await askAgent(prompt);
+    const rawResponse = await askAgent(prompt, false);
     try {
         const clean = rawResponse.replace(/```json|```/g, "").trim();
         return JSON.parse(clean);
@@ -92,8 +102,8 @@ async function investigateFullClaim(claim, companyName) {
     const { queries } = await generateQueries(claim, companyName);
     console.log(`Generated queries:`, queries);
 
-    console.log("Waiting 5s to respect Gemini rate limit...");
-    await delay(5000);
+    console.log("Waiting 10s to respect rate limit...");
+    await delay(10000);
     
     let evidence = await gatherEvidence(queries);
     console.log(`Gathered ${evidence.length} sources of evidence.`);
@@ -101,8 +111,8 @@ async function investigateFullClaim(claim, companyName) {
     let verdictData = await generateVerdict(claim, evidence);
     console.log(`Investigator concluded: ${verdictData.verdict} (${verdictData.confidence}%)`);
 
-    console.log("Waiting 5s to respect Gemini rate limit...");
-    await delay(5000);
+    console.log("Waiting 10s to respect rate limit...");
+    await delay(10000);
     
     // Adversarial Review
     console.log("Reviewing verdict...");
@@ -126,8 +136,8 @@ async function investigateFullClaim(claim, companyName) {
         
         console.log(`Gathered ${extraEvidence.length} new sources. Re-evaluating...`);
 
-        console.log("Waiting 5s to respect Gemini rate limit...");
-        await delay(5000);
+        console.log("Waiting 10s to respect rate limit...");
+        await delay(10000);
 
         verdictData = await generateVerdict(claim, evidence);
         console.log(`Final verdict: ${verdictData.verdict} (${verdictData.confidence}%)`);
@@ -135,8 +145,8 @@ async function investigateFullClaim(claim, companyName) {
         console.log("Reviewer agreed with the verdict.");
     }
 
-    console.log("Waiting 5s to respect Gemini rate limit before next claim...");
-    await delay(5000);
+    console.log("Waiting 10s to respect rate limit before next claim...");
+    await delay(10000);
     
     return {
         claim,

@@ -9,6 +9,13 @@ const { askAgent } = require("./llmService");
  * @returns {Promise<{hasObjection: boolean, objection: string, suggestedFollowUpQuery: string}>}
  */
 async function challengeVerdict(claim, verdictData, evidence) {
+    // Trim evidence to avoid exceeding token limits
+    const trimmedEvidence = evidence.slice(0, 8).map(e => ({
+        title: e.title,
+        url: e.url,
+        content: (e.content || e.snippet || "").slice(0, 300)
+    }));
+
     const prompt = `
 You are a highly skeptical adversarial reviewer. Your job is to poke holes in the following investigator's verdict. 
 Look for alternative explanations, missing context, timing issues (e.g. "could this be outdated?"), or over-reliance on weak sources.
@@ -18,7 +25,7 @@ Investigator's Verdict: ${verdictData.verdict} (Confidence: ${verdictData.confid
 Investigator's Reasoning: "${verdictData.reasoning}"
 
 Evidence used:
-${JSON.stringify(evidence.map(e => ({ title: e.title, snippet: e.snippet })), null, 2)}
+${JSON.stringify(trimmedEvidence, null, 2)}
 
 Is there a significant flaw or alternative explanation that warrants further investigation? If the verdict is extremely solid, you can agree with it, but you should lean towards skepticism.
 
@@ -30,7 +37,7 @@ Return ONLY valid JSON in this exact shape, with no extra text, no markdown form
 }
 `;
 
-    const rawResponse = await askAgent(prompt);
+    const rawResponse = await askAgent(prompt, false);
     
     try {
         const clean = rawResponse.replace(/```json|```/g, "").trim();

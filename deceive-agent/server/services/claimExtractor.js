@@ -26,7 +26,7 @@ ${websiteText}
 """
 `;
 
-const rawResponse= await askAgent(prompt);
+const rawResponse= await askAgent(prompt, false);
 
 try{
     const clean=await rawResponse.replace(/```json|```/g, "").trim();
@@ -40,4 +40,3 @@ try{
 }
 
 module.exports={ extractClaims};
-
