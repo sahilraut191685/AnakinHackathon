@@ -18,7 +18,7 @@ function App() {
     setResult(null);
 
     try {
-      const response = await fetch("http://localhost:5000/api/investigate", {
+      const response = await fetch("https://anakinhackathon.onrender.com/api/investigate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyName, url }),
